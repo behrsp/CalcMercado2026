@@ -1,0 +1,5 @@
+{
+  "name": "Calculadora Mercado",
+  "description": "Um aplicativo simples para gerenciar gastos em compras de mercado, com controle de orçamento e lista de produtos.",
+  "requestFramePermissions": []
+}
