@@ -16,15 +16,18 @@ export const ProductForm: React.FC<ProductFormProps> = ({
   onCancelEdit 
 }) => {
   const [name, setName] = useState('');
-  const [unitPrice, setUnitPrice] = useState<number>(0);
-  const [quantity, setQuantity] = useState<number>(1);
+  const [unitPriceInput, setUnitPriceInput] = useState<string>('0');
+  const [quantityInput, setQuantityInput] = useState<string>('1');
   const [total, setTotal] = useState<number>(0);
+
+  const unitPrice = parseFloat(unitPriceInput.replace(',', '.')) || 0;
+  const quantity = parseFloat(quantityInput) || 0;
 
   useEffect(() => {
     if (editingProduct) {
       setName(editingProduct.name);
-      setUnitPrice(editingProduct.unitPrice);
-      setQuantity(editingProduct.quantity);
+      setUnitPriceInput(editingProduct.unitPrice.toString().replace('.', ','));
+      setQuantityInput(editingProduct.quantity.toString());
     } else {
       resetForm();
     }
@@ -36,8 +39,8 @@ export const ProductForm: React.FC<ProductFormProps> = ({
 
   const resetForm = () => {
     setName('');
-    setUnitPrice(0);
-    setQuantity(1);
+    setUnitPriceInput('0');
+    setQuantityInput('1');
     setTotal(0);
   };
 
@@ -45,21 +48,20 @@ export const ProductForm: React.FC<ProductFormProps> = ({
     e.preventDefault();
     if (!name || unitPrice <= 0 || quantity <= 0) return;
 
+    const productPayload = {
+      name,
+      unitPrice,
+      quantity,
+      total
+    };
+
     if (editingProduct && onUpdate) {
       onUpdate({
         ...editingProduct,
-        name,
-        unitPrice,
-        quantity,
-        total
+        ...productPayload
       });
     } else {
-      onAdd({
-        name,
-        unitPrice,
-        quantity,
-        total
-      });
+      onAdd(productPayload);
     }
     resetForm();
   };
@@ -77,10 +79,10 @@ export const ProductForm: React.FC<ProductFormProps> = ({
           <div className="relative">
             <DollarSign size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
-              type="number"
-              step="0.01"
-              value={unitPrice || ''}
-              onChange={(e) => setUnitPrice(Number(e.target.value))}
+              type="text"
+              inputMode="decimal"
+              value={unitPriceInput}
+              onChange={(e) => setUnitPriceInput(e.target.value.replace(/[^0-9,.]/g, ''))}
               placeholder="0,00"
               className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all"
               required
@@ -94,8 +96,8 @@ export const ProductForm: React.FC<ProductFormProps> = ({
             <Hash size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="number"
-              value={quantity || ''}
-              onChange={(e) => setQuantity(Number(e.target.value))}
+              value={quantityInput}
+              onChange={(e) => setQuantityInput(e.target.value)}
               placeholder="1"
               className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all"
               required
