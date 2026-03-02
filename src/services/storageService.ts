@@ -54,6 +54,13 @@ export const storageService = {
     storageService.saveData(data);
   },
 
+  deletePurchase: (id: string) => {
+    const data = storageService.getData();
+    data.history = data.history.filter((p) => p.id !== id);
+    storageService.saveData(data);
+    return data;
+  },
+
   finishPurchase: () => {
     const data = storageService.getData();
     if (data.products.length === 0) return data;

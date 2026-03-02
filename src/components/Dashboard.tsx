@@ -10,13 +10,14 @@ import {
   Cell
 } from 'recharts';
 import { Purchase } from '../types';
-import { TrendingUp, Calendar, ArrowRight } from 'lucide-react';
+import { TrendingUp, Calendar, ArrowRight, Trash2 } from 'lucide-react';
 
 interface DashboardProps {
   history: Purchase[];
+  onDeletePurchase: (id: string) => void;
 }
 
-export const Dashboard: React.FC<DashboardProps> = ({ history }) => {
+export const Dashboard: React.FC<DashboardProps> = ({ history, onDeletePurchase }) => {
   const monthlyData = useMemo(() => {
     const months: { [key: string]: number } = {};
     
@@ -136,14 +137,23 @@ export const Dashboard: React.FC<DashboardProps> = ({ history }) => {
             <div className="p-8 text-center text-slate-400">Nenhuma compra finalizada ainda.</div>
           ) : (
             history.map((purchase) => (
-              <div key={purchase.id} className="p-4 flex items-center justify-between hover:bg-slate-50 transition-colors">
-                <div>
+              <div key={purchase.id} className="group p-4 flex items-center justify-between hover:bg-slate-50 transition-colors">
+                <div className="flex-1">
                   <p className="font-bold text-slate-800">
                     {new Date(purchase.date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long' })}
                   </p>
                   <p className="text-xs text-slate-500">{purchase.products.length} itens</p>
                 </div>
-                <p className="font-black text-indigo-600">R$ {purchase.total.toFixed(2)}</p>
+                <div className="flex items-center gap-4">
+                  <p className="font-black text-indigo-600">R$ {purchase.total.toFixed(2)}</p>
+                  <button
+                    onClick={() => onDeletePurchase(purchase.id)}
+                    className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                    title="Excluir Histórico"
+                  >
+                    <Trash2 size={18} />
+                  </button>
+                </div>
               </div>
             ))
           )}

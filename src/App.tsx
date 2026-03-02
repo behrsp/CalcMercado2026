@@ -11,14 +11,31 @@ import { BudgetCard } from './components/BudgetCard';
 import { ProductForm } from './components/ProductForm';
 import { ProductList } from './components/ProductList';
 import { Dashboard } from './components/Dashboard';
+import { ConfirmationModal } from './components/ConfirmationModal';
 import { motion, AnimatePresence } from 'motion/react';
 
 type View = 'list' | 'dashboard';
+
+interface ModalConfig {
+  isOpen: boolean;
+  title: string;
+  message: string;
+  onConfirm: () => void;
+  variant: 'danger' | 'success' | 'info';
+  confirmText?: string;
+}
 
 export default function App() {
   const [data, setData] = useState<MarketData>({ credit: 0, products: [], history: [] });
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [currentView, setCurrentView] = useState<View>('list');
+  const [modalConfig, setModalConfig] = useState<ModalConfig>({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+    variant: 'info'
+  });
 
   // Load data on mount
   useEffect(() => {
@@ -60,27 +77,67 @@ export default function App() {
   };
 
   const handleDeleteProduct = (id: string) => {
-    if (confirm('Tem certeza que deseja excluir este produto?')) {
-      const newData = {
-        ...data,
-        products: data.products.filter((p) => p.id !== id),
-      };
-      setData(newData);
-      storageService.deleteProduct(id);
-    }
+    setModalConfig({
+      isOpen: true,
+      title: 'Excluir Produto',
+      message: 'Tem certeza que deseja remover este item da sua lista?',
+      variant: 'danger',
+      confirmText: 'Excluir',
+      onConfirm: () => {
+        const newData = {
+          ...data,
+          products: data.products.filter((p) => p.id !== id),
+        };
+        setData(newData);
+        storageService.deleteProduct(id);
+        setModalConfig(prev => ({ ...prev, isOpen: false }));
+      }
+    });
+  };
+
+  const handleDeletePurchase = (id: string) => {
+    setModalConfig({
+      isOpen: true,
+      title: 'Excluir Histórico',
+      message: 'Esta ação removerá permanentemente esta compra do seu histórico. Continuar?',
+      variant: 'danger',
+      confirmText: 'Excluir',
+      onConfirm: () => {
+        const newData = storageService.deletePurchase(id);
+        setData(newData);
+        setModalConfig(prev => ({ ...prev, isOpen: false }));
+      }
+    });
   };
 
   const handleFinishPurchase = () => {
     if (data.products.length === 0) return;
-    if (confirm('Deseja finalizar esta compra e salvá-la no histórico?')) {
-      const newData = storageService.finishPurchase();
-      setData(newData);
-      setCurrentView('dashboard');
-    }
+    setModalConfig({
+      isOpen: true,
+      title: 'Finalizar Compra',
+      message: 'Deseja salvar esta lista no histórico e começar uma nova?',
+      variant: 'success',
+      confirmText: 'Finalizar',
+      onConfirm: () => {
+        const newData = storageService.finishPurchase();
+        setData(newData);
+        setCurrentView('dashboard');
+        setModalConfig(prev => ({ ...prev, isOpen: false }));
+      }
+    });
   };
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-indigo-100">
+      <ConfirmationModal
+        isOpen={modalConfig.isOpen}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        variant={modalConfig.variant}
+        confirmText={modalConfig.confirmText}
+        onConfirm={modalConfig.onConfirm}
+        onCancel={() => setModalConfig(prev => ({ ...prev, isOpen: false }))}
+      />
       <header className="bg-white border-b border-black/5 sticky top-0 z-10 backdrop-blur-md bg-white/80">
         <div className="max-w-2xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -169,7 +226,7 @@ export default function App() {
               exit={{ opacity: 0, x: -20 }}
               transition={{ duration: 0.3 }}
             >
-              <Dashboard history={data.history} />
+              <Dashboard history={data.history} onDeletePurchase={handleDeletePurchase} />
             </motion.div>
           )}
         </AnimatePresence>
